@@ -15,7 +15,7 @@ import re
 from datetime import datetime, timezone
 import urllib.parse
 
-PORT = 8000
+PORT = int(os.environ.get("PORT", 8000))
 DATA_FILE = os.path.join(os.path.dirname(__file__), "data.json")
 INITIAL_DATA_FILE = os.path.join(os.path.dirname(__file__), "initial_data.json")
 INDEX_FILE = os.path.join(os.path.dirname(__file__), "index.html")
@@ -674,22 +674,10 @@ class MedLensRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 def run_server():
     global PORT
-    port_to_try = PORT
-    max_tries = 10
-    httpd = None
+    socketserver.TCPServer.allow_reuse_address = True
+    httpd = socketserver.TCPServer(("", PORT), MedLensRequestHandler)
 
-    for i in range(max_tries):
-        try:
-            socketserver.TCPServer.allow_reuse_address = True
-            httpd = socketserver.TCPServer(("", port_to_try), MedLensRequestHandler)
-            PORT = port_to_try
-            break
-        except OSError:
-            port_to_try += 1
 
-    if not httpd:
-        print(f"Error: Unable to bind to any port in range {PORT} - {port_to_try}")
-        sys.exit(1)
 
     print(f"MedLens server started successfully at http://localhost:{PORT}")
     print(f"Serving MedLens Clinical Dashboard from {os.path.dirname(__file__)}")
